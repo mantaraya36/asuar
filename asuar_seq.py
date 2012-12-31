@@ -21,12 +21,13 @@ stdsrc = None
 t = None
 num_tracks = 6
 cur_track = 0
-note_lists = ['' for i in range(num_tracks)]
 
 VERSION = '0.1' 
 SEQS_DIR = 'seqs'
 
-parameters = {"outlevel": 0.9,
+def init_data():
+    global parameters, parameter_names, note_lists
+    parameters = {"outlevel": 0.9,
               "out": 0.9,
               "att": 0.01,
               "dec": 0.01,
@@ -63,7 +64,7 @@ parameters = {"outlevel": 0.9,
               "rm2amount": 1,
               "rm2rate": 1 }
 
-parameter_names = {"outlevel": "Nivel de salida (0-1)",
+    parameter_names = {"outlevel": "Nivel de salida (0-1)",
                    "out": "Salida (0-1)",
                    "att": "Ataque (s)",
                    "dec": "Decaida (s)",
@@ -99,8 +100,7 @@ parameter_names = {"outlevel": "Nivel de salida (0-1)",
                    "rm1torm2": "Mod. 1 a Mod 2 (0-1)",
                    "rm2amount": "Cantidad Mod. anillo 2 (0-1)",
                    "rm2rate": "Frequencia mod. anillo 1 (Hz)" }
-
-
+    note_lists = ['' for i in range(num_tracks)]
 
 def read_arduino():
     global cf, res, arduino
@@ -217,9 +217,12 @@ def main_menu():
             stdscr.refresh()
         
 def new_file():
-    make_text_editor()
+    init_data()
+    stdscr.clear()
+    stdscr.addstr(5, 4, "Datos inicializados.", curses.A_REVERSE)
+    stdscr.refresh()
+    time.sleep(2)
     write_main_menu()
-
 
 def load_file():
     global note_lists, parameters
@@ -352,6 +355,7 @@ def key_pressed(text):
 
 def main():
     global cs, perf, stdscr
+    init_data()
     stdscr = curses.initscr()
     curses.noecho()
     curses.cbreak()
