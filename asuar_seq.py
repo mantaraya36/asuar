@@ -201,7 +201,7 @@ def main_menu():
             save_file()
             write_main_menu()
         elif c == ord('4'):
-            make_text_editor()
+            show_sequencer()
             write_main_menu()
         elif c == ord('5'):
             make_parameter_editor()
@@ -313,6 +313,45 @@ def save_file():
     time.sleep(2)
 
     write_main_menu()
+
+def write_sequencer():
+    y,x = stdscr.getmaxyx()
+    stdscr.clear()
+    stdscr.addstr(0, (x/2)- 12, "**** COMDASUAR mk II ****")
+    stdscr.addstr(0, x- 5, "v" + VERSION)
+
+    stdscr.addstr(3, 14, "Secuenciador", curses.A_UNDERLINE | curses.A_BOLD)
+    stdscr.addstr(5, 8, "1 - Editar")
+    stdscr.addstr(6, 8, "2 - Reproducir")
+    stdscr.addstr(7, 8, "3 - Retrogrado")
+    stdscr.addstr(8, 8, "4 - H2")
+    stdscr.addstr(9, 8, "5 - H3")
+    stdscr.addstr(10, 8, "6 - H4")
+    stdscr.addstr(11, 8, "7 - H5")
+    stdscr.addstr(12, 8, "8 - H6")
+    stdscr.addstr(13, 8, "9 - H7")
+    stdscr.addstr(15, 8, "0 - Regresar")
+    stdscr.refresh()    
+
+def show_sequencer():
+    while True:
+        write_sequencer()
+        c = stdscr.getch()
+        if c == ord('1'):
+            make_text_editor()
+        elif c == ord('2'):
+            pass
+        elif c == ord('3'):
+            pass
+        elif c == ord('4'):
+            pass
+        elif c == ord('5'):
+            pass
+        elif c == ord('a'):
+            pass
+        elif c == ord('0'):
+            break
+
 
 def make_text_editor():
     y,x = stdscr.getmaxyx()
