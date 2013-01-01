@@ -323,13 +323,8 @@ def write_sequencer():
     stdscr.addstr(3, 14, "Secuenciador", curses.A_UNDERLINE | curses.A_BOLD)
     stdscr.addstr(5, 8, "1 - Editar")
     stdscr.addstr(6, 8, "2 - Reproducir")
-    stdscr.addstr(7, 8, "3 - Retrogrado")
-    stdscr.addstr(8, 8, "4 - H2")
-    stdscr.addstr(9, 8, "5 - H3")
-    stdscr.addstr(10, 8, "6 - H4")
-    stdscr.addstr(11, 8, "7 - H5")
-    stdscr.addstr(12, 8, "8 - H6")
-    stdscr.addstr(13, 8, "9 - H7")
+    stdscr.addstr(7, 8, "3 - Programa")
+
     stdscr.addstr(15, 8, "0 - Regresar")
     stdscr.refresh()    
 
@@ -342,22 +337,49 @@ def show_sequencer():
         elif c == ord('2'):
             pass
         elif c == ord('3'):
+            run_program()
+        elif c == ord('0'):
+            break
+
+def write_program_list():
+    y,x = stdscr.getmaxyx()
+    stdscr.clear()
+    stdscr.addstr(0, (x/2)- 12, "**** COMDASUAR mk II ****")
+    stdscr.addstr(0, x- 5, "v" + VERSION)
+
+    stdscr.addstr(3, 14, "Programas Heuristicos", curses.A_UNDERLINE | curses.A_BOLD)
+    stdscr.addstr(5, 8, "1 - ")
+    stdscr.addstr(6, 8, "2 - ")
+    stdscr.addstr(7, 8, "3 - ")
+
+    stdscr.addstr(15, 8, "0 - Regresar")
+    stdscr.refresh()    
+
+def run_program():
+    while True:
+        write_program_list()
+        c = stdscr.getch()
+        if c == ord('1'):
+            pass
+        elif c == ord('2'):
+            pass
+        elif c == ord('3'):
             pass
         elif c == ord('4'):
             pass
         elif c == ord('5'):
             pass
-        elif c == ord('a'):
-            pass
         elif c == ord('0'):
             break
-
 
 def make_text_editor():
     y,x = stdscr.getmaxyx()
     stdscr.addstr(y-1, 3, "Presione Ctrl+G para salir")
+    for i in range(y-2):
+        stdscr.addstr(i+1, 0, "%d"%i)
     stdscr.refresh()
-    editwin = stdscr.subwin(curses.LINES - 2, curses.COLS, 1, 0)
+    curses.curs_set(1)
+    editwin = stdscr.subwin(curses.LINES - 2, curses.COLS- 5, 1, 4)
     editwin.clear()
     editwin.addstr(note_lists[cur_track])
     editwin.bkgd(' ', curses.A_REVERSE)
@@ -365,6 +387,7 @@ def make_text_editor():
     note_lists[cur_track] = editpad.edit()
     editwin.bkgd(' ', curses.A_NORMAL)
     editwin.clear()
+    curses.curs_set(0)
     del editwin
     del editpad
 
