@@ -335,11 +335,55 @@ def show_sequencer():
         if c == ord('1'):
             make_text_editor()
         elif c == ord('2'):
-            pass
+            play_sequence()
         elif c == ord('3'):
             run_program()
         elif c == ord('0'):
             break
+
+def convert_to_csound(asuar_text):
+    lines = asuar_text.splitlines()
+    csound_text = ''
+    cur_octave = 4
+    cur_pitch = 0
+    cur_alt = 0
+    cur_plet = 0
+    cur_dur = 1
+    pos = 0
+    durations = {'R': 4, 'B':2, 'C':0.5, 'N':1, 'S':0.25, 'F':0.125, 'M':0625}
+    pitches = {'C':0, 'D':2, 'E':4, 'F':5, 'G':7, 'A':9, 'B':11}
+# FIXME fix alteration values from docs
+    alterations = {'S':1, 'W':-1, 'Q':0, 'U':0, 'T': 0, 'V':0, 'R': 0}
+    for line in lines:
+        note,dur = line.split()
+        if dur[0].isdigit():
+            cur_plet = int(dur[0])
+            dur = dur[1:]
+        
+        if dur:
+            cur_dur = 0
+            for d in dur:
+                cur_dur += durations[d]
+
+        if note[0] == 'R':
+            pos += cur_dur
+            continue
+        if note[0].isdigit():
+            cur_octave = int(note[0])
+            note = note[1:]
+        if note:
+            cur_pitch = pitches[note[0]]
+            if len(note) > 1:
+                cur_alt = alterations[note[1]]
+        midi_pitch = (12 * (cur_octave + 1)) + cur_pitch + cur_alt
+        pitch = 440 * (2**((midi_pitch-69)/12.0))
+        new_note = 'i 2 %f %f %f %f\n'%(pos, cur_dur, pitch, 100)
+        csound_text += new_note
+        pos += cur_dur
+    return csound_text
+
+def play_sequence():
+    perf.InputMessage(convert_to_csound(note_lists[cur_track]))
 
 def write_program_list():
     y,x = stdscr.getmaxyx()
@@ -348,9 +392,12 @@ def write_program_list():
     stdscr.addstr(0, x- 5, "v" + VERSION)
 
     stdscr.addstr(3, 14, "Programas Heuristicos", curses.A_UNDERLINE | curses.A_BOLD)
-    stdscr.addstr(5, 8, "1 - ")
-    stdscr.addstr(6, 8, "2 - ")
-    stdscr.addstr(7, 8, "3 - ")
+    stdscr.addstr(5, 8, "C1 - Canon")
+    stdscr.addstr(6, 8, "C2 - Retrogrado")
+    stdscr.addstr(7, 8, "C3 - Transmutacion de tonos")
+    stdscr.addstr(8, 8, "C4 - Transmutacion de duracion")
+    stdscr.addstr(9, 8, "C5 - Probabilidades")
+    stdscr.addstr(10, 8, "C6 - Insercion de grupo de duraciones")
 
     stdscr.addstr(15, 8, "0 - Regresar")
     stdscr.refresh()    
@@ -407,7 +454,7 @@ def make_parameter_editor():
     stdscr.refresh()
     while True:
        c = stdscr.getch()
-       if c == ord('q'): break  # Exit the while()
+       if c == ord('0'): break  # Exit the while()
        elif c == ord('m'): break
 
 
