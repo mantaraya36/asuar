@@ -8,22 +8,22 @@ import curses
 from curses.textpad import Textbox
 import os
 import pickle
-
-cf = 1000
-res = 0.9
+import sys
 
 kblocks = 0
 
 cs = None
 perf = None
 arduino = None
-stdsrc = None
+stdscr = None
+outerscr = None
 t = None
 num_tracks = 6
 cur_track = 0
 
 VERSION = '0.1' 
 SEQS_DIR = 'seqs'
+PROG_DIR = 'progs'
 
 def init_data():
     global parameters, parameter_names, note_lists
@@ -103,38 +103,50 @@ def init_data():
     note_lists = ['' for i in range(num_tracks)]
 
 def read_arduino():
-    global cf, res, arduino
+    global parameters, arduino
     while True:
         arduino.iterate()
-        cf = (arduino.analog[1].read()*6000)+100
-        res = (arduino.analog[0].read()/2.0) + 0.48
-        #print res
+        parameters['res'] = (arduino.analog[0].read()/2.0) + 0.48
+        parameters['cf'] = (arduino.analog[1].read()*6000)+100
+        parameters['fenvamount'] = arduino.analog[2].read()
+        parameters['rm1'] = arduino.analog[3].read()
+        parameters['rm1rate'] = (arduino.analog[4].read()*500) + 10
+        parameters['revmix'] = arduino.analog[5].read()
 
 def init_arduino():
     global arduino
-    try:
-        arduino = pyduino.Arduino('/dev/ttyUSB0')
-        arduino.analog[0].set_active(1)
-        arduino.analog[1].set_active(1)
-        arduino.analog[2].set_active(1)
-        arduino.analog[3].set_active(1)
-        arduino.analog[4].set_active(1)
-        arduino.analog[5].set_active(1)
+    arduino_devs = ['/dev/ttyUSB0', '/dev/ttyACM0']
+    dev = ''
+    for d in arduino_devs:
+        if os.path.exists(d):
+            dev = d
+            break
+    if not dev:
+        return
+    arduino = pyduino.Arduino(dev)
+    arduino.analog[0].set_active(1)
+    arduino.analog[1].set_active(1)
+    arduino.analog[2].set_active(1)
+    arduino.analog[3].set_active(1)
+    arduino.analog[4].set_active(1)
+    arduino.analog[5].set_active(1)
+    arduino.iterate()
+    while arduino.analog[0].read() == -1 or arduino.analog[1].read() == -1 \
+            or arduino.analog[2].read() == -1 or arduino.analog[3].read() == -1 \
+            or arduino.analog[4].read() == -1 or arduino.analog[5].read() == -1:
         arduino.iterate()
-        while arduino.analog[0].read() == -1 or arduino.analog[1].read() == -1 :
-            arduino.iterate()
-        t = Thread(target=read_arduino)
-        t.start()
-    except:
-        arduino = None
-
+    t = Thread(target=read_arduino)
+#    t.start()
+    
 
 def cb(csound):
     global kblocks
-    global cf, res
+    global parameters
     kblocks += 1
-    csound.SetChannel("cf", cf)
-    csound.SetChannel("res", res)
+    params = ['cf' , 'res', 'fenvamount', 'rm1', 'rm1rate', 'revmix']
+    for p in params:
+        csound.SetChannel(p, parameters[p])
+
 
 def start_csound():
 # create empty orchestra and score
@@ -150,14 +162,23 @@ def start_csound():
 def show_initial_screen():
     stdscr.clear()
     y,x = stdscr.getmaxyx()
-    stdscr.addstr(y/3, (x/2)- 10, "**** COMDASUAR mk II ****")
+    title =  "* * * * C O M D A S U A R   II * * * * "
+    stdscr.addstr(y/3, (x - len(title))/2, title)
     stdscr.addstr(0, x - 8, "v" + VERSION)
+    title =  "COMPUTADOR MUSICAL"
+    stdscr.addstr(y/3 + 3 , (x - len(title))/2, title)
+    title =  "DIGITAL ASUAR"
+    stdscr.addstr(y/3 + 5 , (x - len(title))/2, title)
+    title =  "* * * * *  A S U A R * * * * *"
+    stdscr.addstr(y/3 + 7 , (x - len(title))/2, title)
     stdscr.move(y-3,0)
     stdscr.refresh()
 
 def show_help_window():
     y,x = stdscr.getmaxyx()
-    helpwin = curses.newwin(y-4, x-10, 2, 5)
+    stdscr.clear()
+    stdscr.refresh()
+    helpwin = stdscr.subwin(y-3, x-10, 2, 5)
     helpwin.border()
     helpwin.addstr(1, 5, "Por: Andres Burbano y Andres Cabrera", curses.A_BOLD)
     helpwin.addstr(3, 5, "Licencia:")
@@ -168,6 +189,8 @@ def show_help_window():
     for i in range(60):
         perf.InputMessage("i 2 %f 0.05 %i %i 1"%(i/10.0, 110+(i*44), 100 - i))
     helpwin.getch()
+    helpwin.clear()
+    helpwin.refresh()
     del helpwin
 
 def write_main_menu():
@@ -385,39 +408,46 @@ def convert_to_csound(asuar_text):
 def play_sequence():
     perf.InputMessage(convert_to_csound(note_lists[cur_track]))
 
-def write_program_list():
+def write_program_list(progs):
     y,x = stdscr.getmaxyx()
     stdscr.clear()
     stdscr.addstr(0, (x/2)- 12, "**** COMDASUAR mk II ****")
     stdscr.addstr(0, x- 5, "v" + VERSION)
 
     stdscr.addstr(3, 14, "Programas Heuristicos", curses.A_UNDERLINE | curses.A_BOLD)
-    stdscr.addstr(5, 8, "C1 - Canon")
-    stdscr.addstr(6, 8, "C2 - Retrogrado")
-    stdscr.addstr(7, 8, "C3 - Transmutacion de tonos")
-    stdscr.addstr(8, 8, "C4 - Transmutacion de duracion")
-    stdscr.addstr(9, 8, "C5 - Probabilidades")
-    stdscr.addstr(10, 8, "C6 - Insercion de grupo de duraciones")
+    for i,prog in enumerate(progs):
+        stdscr.addstr(i + 4, 8, "%i - %s"%(i+ 1, prog))
 
     stdscr.addstr(15, 8, "0 - Regresar")
     stdscr.refresh()    
 
+def run_prog(prog):
+    try:
+        line = "from %s import program"%(prog[:-3])
+        exec(line)
+        program(cur_track, note_lists, perf, stdscr)
+    except Exception as e:
+        stdscr.clear()
+        stdscr.addstr(10, 3, "Error:" + str(e))
+        stdscr.refresh()
+        time.sleep(2)
+        
 def run_program():
+    progs = os.listdir(PROG_DIR)
+    for p in progs:
+        if not p.endswith('.py'):
+            progs.remove(p)
     while True:
-        write_program_list()
-        c = stdscr.getch()
-        if c == ord('1'):
-            pass
-        elif c == ord('2'):
-            pass
-        elif c == ord('3'):
-            pass
-        elif c == ord('4'):
-            pass
-        elif c == ord('5'):
-            pass
-        elif c == ord('0'):
+        write_program_list(progs)
+        c = stdscr.getkey()
+        if c == '0':
             break
+        if not c.isdigit():
+            pass
+        index = int(c) - 1
+        if index < len(progs):
+            run_prog(progs[index])
+
 
 def make_text_editor():
     y,x = stdscr.getmaxyx()
@@ -426,6 +456,7 @@ def make_text_editor():
         stdscr.addstr(i+1, 0, "%d"%i)
     stdscr.refresh()
     curses.curs_set(1)
+#    editwin = outerscr.subwin(curses.LINES - 2, curses.COLS- 5, 1, 4)
     editwin = stdscr.subwin(curses.LINES - 2, curses.COLS- 5, 1, 4)
     editwin.clear()
     editwin.addstr(note_lists[cur_track])
@@ -463,13 +494,21 @@ def key_pressed(text):
     perf.InputMessage("i 2 0 1 %f 100 1"%freq)
 
 def main():
-    global cs, perf, stdscr
+    global cs, perf, outerscr, stdscr
     init_data()
+    sys.path.insert(0,PROG_DIR)
+
     stdscr = curses.initscr()
+    stdscr.keypad(1)
+    #outerscr = curses.initscr()
+    #outerscr.keypad(1)
+
     curses.noecho()
     curses.cbreak()
-    stdscr.keypad(1)
     curses.curs_set(0)
+
+    #y,x = outerscr.getmaxyx()
+    #stdscr = outerscr.subwin(y-3, x-6, 1, 3)
 
     show_initial_screen()
 
@@ -497,16 +536,17 @@ def main():
     perf.InputMessage("i 2 1.5 0.5 660 100 1")
     perf.InputMessage("i 2 2 2 110 100 1")
 
-#    time.sleep(4)
+    time.sleep(4)
     stdscr.clear()
 
     main_menu()
 
 
 def cleanup():
-    global stdscr
+    global outerscr
     perf.Stop()
     curses.nocbreak()
+    #outerscr.keypad(0)
     stdscr.keypad(0)
     curses.echo()
 
