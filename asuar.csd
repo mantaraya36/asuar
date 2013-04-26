@@ -1,5 +1,6 @@
 <CsoundSynthesizer>
 <CsOptions>
+,-odac0 -+rtaudio=portaudio -+rtmidi=alsa -Ma
 -odac -+rtaudio=alsa -+rtmidi=alsa -Ma
 -B4096 -b2048 -d --logfile=null
 </CsOptions>
@@ -101,8 +102,8 @@ kout chnget "out"
 krm1 chnget "rm1"
 krm2 chnget "rm2"
 
-kcf portk kcf, 0.02
-kres portk kres, 0.02
+kcf portk kcf, 0.03
+kres portk kres, 0.03
 
 midinoteoncps p4, p5
 

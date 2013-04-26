@@ -20,6 +20,7 @@ outerscr = None
 t = None
 num_tracks = 6
 cur_track = 0
+tempo = 60
 
 VERSION = '0.1' 
 SEQS_DIR = 'seqs'
@@ -59,10 +60,10 @@ def init_data():
               # "lfo2patch": 1,
               # "lfo2dest": 1,
               "rm1amount": 1,
-              "rm1rate": 1,
+              "rm1rate": 200,
               "rm1torm2": 1,
               "rm2amount": 1,
-              "rm2rate": 1 }
+              "rm2rate": 45 }
 
     parameter_names = {"outlevel": "Nivel de salida (0-1)",
                    "out": "Salida (0-1)",
@@ -106,12 +107,12 @@ def read_arduino():
     global parameters, arduino
     while True:
         arduino.iterate()
-        parameters['res'] = (arduino.analog[0].read()/2.0) + 0.48
-        parameters['cf'] = (arduino.analog[1].read()*6000)+100
-        parameters['fenvamount'] = arduino.analog[2].read()
-        parameters['rm1'] = arduino.analog[3].read()
-        parameters['rm1rate'] = (arduino.analog[4].read()*500) + 10
-        parameters['revmix'] = arduino.analog[5].read()
+        #parameters['res'] = (arduino.analog[0].read()/2.0) + 0.48
+        parameters['cf'] = (arduino.analog[0].read()*6000)+100
+        #parameters['fenvamount'] = arduino.analog[2].read()
+        parameters['rm1'] = arduino.analog[2].read()
+        #parameters['rm1rate'] = (arduino.analog[3].read()*500) + 10
+        parameters['revmix'] = arduino.analog[3].read()
 
 def init_arduino():
     global arduino
@@ -136,14 +137,14 @@ def init_arduino():
             or arduino.analog[4].read() == -1 or arduino.analog[5].read() == -1:
         arduino.iterate()
     t = Thread(target=read_arduino)
-#    t.start()
+    t.start()
     
 
 def cb(csound):
     global kblocks
     global parameters
     kblocks += 1
-    params = ['cf' , 'res', 'fenvamount', 'rm1', 'rm1rate', 'revmix']
+    params = ['cf', 'rm1','revmix']
     for p in params:
         csound.SetChannel(p, parameters[p])
 
@@ -195,9 +196,7 @@ def show_help_window():
 
 def write_main_menu():
     y,x = stdscr.getmaxyx()
-    stdscr.clear()
-    stdscr.addstr(0, (x/2)- 12, "**** COMDASUAR mk II ****")
-    stdscr.addstr(0, x- 5, "v" + VERSION)
+    print_header(x,y)
 
     stdscr.addstr(3, 14, "Menu principal", curses.A_UNDERLINE | curses.A_BOLD)
     stdscr.addstr(5, 8, "1 - Nuevo")
@@ -339,14 +338,16 @@ def save_file():
 
 def write_sequencer():
     y,x = stdscr.getmaxyx()
-    stdscr.clear()
-    stdscr.addstr(0, (x/2)- 12, "**** COMDASUAR mk II ****")
-    stdscr.addstr(0, x- 5, "v" + VERSION)
+    print_header(x,y)
 
-    stdscr.addstr(3, 14, "Secuenciador", curses.A_UNDERLINE | curses.A_BOLD)
+    stdscr.addstr(3, 14, "Secuenciador - Pista %i"%cur_track,
+                  curses.A_UNDERLINE | curses.A_BOLD)
     stdscr.addstr(5, 8, "1 - Editar")
-    stdscr.addstr(6, 8, "2 - Reproducir")
-    stdscr.addstr(7, 8, "3 - Programa")
+    stdscr.addstr(6, 8, "2 - Reproducir pista")
+    stdscr.addstr(7, 8, "3 - Reproducir todo")
+    stdscr.addstr(8, 8, "4 - Programa")
+    stdscr.addstr(9, 8, "5 - Cambiar pista")
+    stdscr.addstr(10, 8, "6 - Cambiar Tempo (Actual: %f)"%tempo)
 
     stdscr.addstr(15, 8, "0 - Regresar")
     stdscr.refresh()    
@@ -358,9 +359,15 @@ def show_sequencer():
         if c == ord('1'):
             make_text_editor()
         elif c == ord('2'):
-            play_sequence()
+            play_sequence(cur_track)
         elif c == ord('3'):
+            play_sequence()
+        elif c == ord('4'):
             run_program()
+        elif c == ord('5'):
+            change_track()
+        elif c == ord('6'):
+            change_tempo()
         elif c == ord('0'):
             break
 
@@ -388,6 +395,7 @@ def convert_to_csound(asuar_text):
             for d in dur:
                 cur_dur += durations[d]
 
+        cur_dur = cur_dur * 60/tempo
         if note[0] == 'R':
             pos += cur_dur
             continue
@@ -405,14 +413,21 @@ def convert_to_csound(asuar_text):
         pos += cur_dur
     return csound_text
 
-def play_sequence():
-    perf.InputMessage(convert_to_csound(note_lists[cur_track]))
+def play_sequence(track = -1):
+    if track >= 0:
+        perf.InputMessage(convert_to_csound(note_lists[cur_track]))
+    else:
+        for i in range(num_tracks):
+            perf.InputMessage(convert_to_csound(note_lists[i]))
 
-def write_program_list(progs):
-    y,x = stdscr.getmaxyx()
+def print_header(x,y):
     stdscr.clear()
     stdscr.addstr(0, (x/2)- 12, "**** COMDASUAR mk II ****")
     stdscr.addstr(0, x- 5, "v" + VERSION)
+    
+def write_program_list(progs):
+    y,x = stdscr.getmaxyx()
+    print_header(x,y)
 
     stdscr.addstr(3, 14, "Programas Heuristicos", curses.A_UNDERLINE | curses.A_BOLD)
     for i,prog in enumerate(progs):
@@ -448,32 +463,63 @@ def run_program():
         if index < len(progs):
             run_prog(progs[index])
 
+def change_track():
+    global cur_track
+    y,x = stdscr.getmaxyx()
+    print_header(x,y)
+    curses.echo()
+    stdscr.addstr(6, 4, 'Cambiar a pista: ')
+    num = stdscr.getstr()
+    curses.noecho()
+    tr = int(num)
+    if not num.isdigit() or tr < 0 or tr > num_tracks:
+        stdscr.addstr(10, 4, 'Entrada invalida!')
+        stdscr.refresh()
+        time.sleep(1)
+        return
+    cur_track = tr
+    
+def change_tempo():
+    global tempo
+    y,x = stdscr.getmaxyx()
+    print_header(x,y)
+    curses.echo()
+    stdscr.addstr(6, 4, 'Cambiar a tempo (Actual: %f): '%tempo)
+    num = stdscr.getstr()
+    curses.noecho()
+    new_tempo = float(num)
+    if new_tempo < 20 or new_tempo > 300:
+        stdscr.addstr(10, 4, 'Entrada invalida!')
+        stdscr.refresh()
+        time.sleep(1)
+        return
+    tempo = new_tempo
+    
 
 def make_text_editor():
     y,x = stdscr.getmaxyx()
-    stdscr.addstr(y-1, 3, "Presione Ctrl+G para salir")
-    for i in range(y-2):
+    stdscr.addstr(y-2, 3, "Presione Ctrl+G para salir")
+    for i in range(y-3):
         stdscr.addstr(i+1, 0, "%d"%i)
     stdscr.refresh()
-    curses.curs_set(1)
+    #    curses.curs_set(1)
 #    editwin = outerscr.subwin(curses.LINES - 2, curses.COLS- 5, 1, 4)
-    editwin = stdscr.subwin(curses.LINES - 2, curses.COLS- 5, 1, 4)
+    editwin = stdscr.subwin(curses.LINES - 3, curses.COLS- 7, 1, 6)
     editwin.clear()
     editwin.addstr(note_lists[cur_track])
     editwin.bkgd(' ', curses.A_REVERSE)
+    editwin.scrollok(True)
     editpad = Textbox(editwin)
     note_lists[cur_track] = editpad.edit()
     editwin.bkgd(' ', curses.A_NORMAL)
     editwin.clear()
-    curses.curs_set(0)
+    #  curses.curs_set(0)
     del editwin
     del editpad
 
 def make_parameter_editor():
     y,x = stdscr.getmaxyx()
-    stdscr.clear()
-    stdscr.addstr(0, (x/2)- 12, "**** COMDASUAR mk II ****")
-    stdscr.addstr(0, x- 5, "v" + VERSION)
+    print_header(x,y)
     stdscr.addstr(3, 14, "Parametros", curses.A_UNDERLINE | curses.A_BOLD)
 
     row = 5
@@ -505,7 +551,7 @@ def main():
 
     curses.noecho()
     curses.cbreak()
-    curses.curs_set(0)
+    #   curses.curs_set(0)
 
     #y,x = outerscr.getmaxyx()
     #stdscr = outerscr.subwin(y-3, x-6, 1, 3)
@@ -550,7 +596,7 @@ def cleanup():
     stdscr.keypad(0)
     curses.echo()
 
-    curses.curs_set(1)
+    # curses.curs_set(1)
     curses.endwin()
     if t is not None:
         t.stop()
