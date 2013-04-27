@@ -101,7 +101,7 @@ def init_data():
                    "rm1torm2": "Mod. 1 a Mod 2 (0-1)",
                    "rm2amount": "Cantidad Mod. anillo 2 (0-1)",
                    "rm2rate": "Frequencia mod. anillo 1 (Hz)" }
-    note_lists = ['' for i in range(num_tracks)]
+    note_lists = ['\n' for i in range(num_tracks)]
 
 def read_arduino():
     global parameters, arduino
@@ -385,7 +385,9 @@ def convert_to_csound(asuar_text):
 # FIXME fix alteration values from docs
     alterations = {'S':1, 'W':-1, 'Q':0, 'U':0, 'T': 0, 'V':0, 'R': 0}
     for line in lines:
-        note,dur = line.split()
+        if not line:
+            continue
+        note,dur, = line.split()
         if dur[0].isdigit():
             cur_plet = int(dur[0])
             dur = dur[1:]
@@ -494,28 +496,117 @@ def change_tempo():
         time.sleep(1)
         return
     tempo = new_tempo
-    
 
+# This scrolling screen by Lyle Scott III
+# lyle@digitalfoo.net
+    
+topLineNum = 0
+highlightLineNum = 0
+
+SPACE_KEY = 32
+ESC_KEY = 27
+
+def displayScreen(screen):
+    global topLineNum, highlightLineNum
+    screen.clear()
+
+    # now paint the rows
+    bottom = topLineNum + curses.LINES -3
+    lines = note_lists[cur_track].split('\n')
+    screen.bkgd(' ', curses.A_REVERSE)
+    for (index,line,) in enumerate(lines[topLineNum:bottom]):
+        linenum = topLineNum + index
+        line = '%04i %s' % (linenum, line,)
+
+        # highlight current line            
+        if index != highlightLineNum:
+            screen.addstr(index, 0, line, curses.A_REVERSE)
+        else:
+            screen.addstr(index, 0, line, curses.A_BOLD | curses.A_REVERSE)
+
+    screen.move(highlightLineNum, 5)
+    screen.refresh()
+
+
+def updown(increment, nOutputLines):
+    global topLineNum, highlightLineNum
+    nextLineNum = highlightLineNum + increment
+
+    # paging
+    if increment == -1 and highlightLineNum == 0 and topLineNum != 0:
+        topLineNum += -1 
+        return
+    elif increment == 1 and nextLineNum == curses.LINES - 3 and (topLineNum+curses.LINES - 3) != nOutputLines:
+        topLineNum += 1
+        return
+
+    # scroll highlight line
+    if increment == -1 and (topLineNum != 0 or highlightLineNum != 0):
+        highlightLineNum = nextLineNum
+    elif increment == 1 and (topLineNum+highlightLineNum+1) != nOutputLines and highlightLineNum != curses.LINES- 3:
+        highlightLineNum = nextLineNum
+
+def addLine():
+    global topLineNum, highlightLineNum
+    lines = note_lists[cur_track].split('\n')
+    lines.insert(highlightLineNum + 1, '')
+    note_lists[cur_track] = '\n'.join(lines)
+    highlightLineNum += 1
+
+def deleteLine():
+    global topLineNum, highlightLineNum
+    lines = note_lists[cur_track].split('\n')
+    if len(lines) > 2: 
+        lines.pop(highlightLineNum)
+    if highlightLineNum >= len(lines):
+        highlightLineNum -= 1
+    note_lists[cur_track] = '\n'.join(lines)
+
+def editLine(editwin):
+    lines = note_lists[cur_track].split('\n')
+    linewin = editwin.subwin(1, curses.COLS - 5, highlightLineNum + 1, 5)
+    linewin.addstr(0, 0, lines[highlightLineNum])
+    linewin.bkgd(' ')
+    editpad = Textbox(linewin)
+    new_line = editpad.edit()
+    lines[highlightLineNum] = new_line
+    note_lists[cur_track] = '\n'.join(lines)
+    
 def make_text_editor():
+    global topLineNum, highlightLineNum
     y,x = stdscr.getmaxyx()
     stdscr.addstr(y-2, 3, "Presione Ctrl+G para salir")
-    for i in range(y-3):
-        stdscr.addstr(i+1, 0, "%d"%i)
-    stdscr.refresh()
     #    curses.curs_set(1)
 #    editwin = outerscr.subwin(curses.LINES - 2, curses.COLS- 5, 1, 4)
-    editwin = stdscr.subwin(curses.LINES - 3, curses.COLS- 7, 1, 6)
+    editwin = stdscr.subwin(curses.LINES - 3, curses.COLS, 1, 0)
     editwin.clear()
-    editwin.addstr(note_lists[cur_track])
-    editwin.bkgd(' ', curses.A_REVERSE)
     editwin.scrollok(True)
-    editpad = Textbox(editwin)
-    note_lists[cur_track] = editpad.edit()
-    editwin.bkgd(' ', curses.A_NORMAL)
-    editwin.clear()
+    topLineNum = 0
+    highlightLineNum = 0
+    while True:
+        displayScreen(editwin)
+        # get user command
+        c = editwin.getch()
+        nOutputLines = len(note_lists[cur_track].split('\n'))
+        if c == curses.KEY_UP or c == ord('w'): 
+            updown(-1, nOutputLines)
+        elif c == curses.KEY_DOWN or c == ord('x'):
+            updown(1, nOutputLines)
+        elif c == curses.KEY_ENTER or c == ord('d'):
+            addLine()
+        elif  c == ord('j'):
+            deleteLine()
+        elif c == SPACE_KEY:
+            editLine(editwin)
+        elif c == ESC_KEY  or c == ord('q'):
+            break
+    # editpad = Textbox(editwin)
+    # note_lists[cur_track] = editpad.edit()
+    # editwin.bkgd(' ', curses.A_NORMAL)
+    # editwin.clear()
     #  curses.curs_set(0)
     del editwin
-    del editpad
+    #del editpad
 
 def make_parameter_editor():
     y,x = stdscr.getmaxyx()
