@@ -248,7 +248,7 @@ def new_file():
 
 def load_file():
     global note_lists, parameters
-    files = os.listdir(SEQS_DIR)
+    files = os.listdir(SQS_DIR)
     stdscr.clear()
     stdscr.scrollok(True)
     if not files:
@@ -417,10 +417,24 @@ def convert_to_csound(asuar_text):
 
 def play_sequence(track = -1):
     if track >= 0:
-        perf.InputMessage(convert_to_csound(note_lists[cur_track]))
+        try:
+            perf.InputMessage(convert_to_csound(note_lists[cur_track]))
+        except:
+            stdscr.clear()
+            stdscr.addstr(5, 4, "Error compilando pista.", curses.A_REVERSE)
+            stdscr.refresh()
+            time.sleep(2)
+            write_main_menu()
     else:
         for i in range(num_tracks):
-            perf.InputMessage(convert_to_csound(note_lists[i]))
+            try:
+                perf.InputMessage(convert_to_csound(note_lists[i]))
+            except:
+                stdscr.clear()
+                stdscr.addstr(5, 4, "Error compilando pista %i."%(i+1), curses.A_REVERSE)
+                stdscr.refresh()
+                time.sleep(2)
+                write_main_menu()
 
 def print_header(x,y):
     stdscr.clear()
