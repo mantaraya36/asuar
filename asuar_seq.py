@@ -107,12 +107,12 @@ def read_arduino():
     global parameters, arduino
     while True:
         arduino.iterate()
-        #parameters['res'] = (arduino.analog[0].read()/2.0) + 0.48
+        parameters['res'] = (arduino.analog[1].read()/2.0) + 0.48
         parameters['cf'] = (arduino.analog[0].read()*6000)+100
         #parameters['fenvamount'] = arduino.analog[2].read()
         parameters['rm1'] = arduino.analog[2].read()
-        #parameters['rm1rate'] = (arduino.analog[3].read()*500) + 10
-        parameters['revmix'] = arduino.analog[3].read()
+        parameters['rm1rate'] = (arduino.analog[3].read()*500) + 10
+        parameters['revmix'] = arduino.analog[4].read()
 
 def init_arduino():
     global arduino

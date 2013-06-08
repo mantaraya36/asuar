@@ -1,8 +1,8 @@
 <CsoundSynthesizer>
 <CsOptions>
-,-odac0 -+rtaudio=portaudio -+rtmidi=alsa -Ma
+;-odac0 -+rtaudio=portaudio -+rtmidi=alsa -Ma
 -odac -+rtaudio=alsa -+rtmidi=alsa -Ma
--B4096 -b2048 -d --logfile=null
+-B4096 -b2048 -d --logfile=csound_out.txt
 </CsOptions>
 <CsInstruments>
 
@@ -60,9 +60,11 @@ turnon 1 ; 2 LFOs
 turnon 80 ; RM 1
 turnon 81 ; RM 2
 turnon 99 ; reverb
+turnon 100 ; serial
 
 gisine ftgen 0,0, 4096, 10, 1
 
+;giPort serialBegin "/dev/ttyUSB0", 115200
 
 instr 1  ; lfos
 ; TODO make shape dynamic!
@@ -182,11 +184,20 @@ instr 99 ; Reverb
 endin
 
 
+instr 100 ; Serial receiver
+;"/dev/ttyUSB0", "/dev/ttyACM0"
+; serialEnd giPort
+;kByte serialRead giPort
+
+;printk2 kByte
+endin
+
 </CsInstruments>
 <CsScore>
 f 0 3600
 </CsScore>
 </CsoundSynthesizer>
+
 
 
 <bsbPanel>
@@ -203,7 +214,7 @@ f 0 3600
   <g>46</g>
   <b>255</b>
  </bgcolor>
- <bsbObject version="2" type="BSBVSlider">
+ <bsbObject type="BSBVSlider" version="2">
   <objectName>att</objectName>
   <x>35</x>
   <y>36</y>
@@ -221,7 +232,7 @@ f 0 3600
   <resolution>-1.00000000</resolution>
   <randomizable group="0">false</randomizable>
  </bsbObject>
- <bsbObject version="2" type="BSBVSlider">
+ <bsbObject type="BSBVSlider" version="2">
   <objectName>dec</objectName>
   <x>65</x>
   <y>36</y>
@@ -239,7 +250,7 @@ f 0 3600
   <resolution>-1.00000000</resolution>
   <randomizable group="0">false</randomizable>
  </bsbObject>
- <bsbObject version="2" type="BSBVSlider">
+ <bsbObject type="BSBVSlider" version="2">
   <objectName>sus</objectName>
   <x>95</x>
   <y>36</y>
@@ -257,7 +268,7 @@ f 0 3600
   <resolution>-1.00000000</resolution>
   <randomizable group="0">false</randomizable>
  </bsbObject>
- <bsbObject version="2" type="BSBVSlider">
+ <bsbObject type="BSBVSlider" version="2">
   <objectName>rel</objectName>
   <x>125</x>
   <y>36</y>
@@ -275,7 +286,7 @@ f 0 3600
   <resolution>-1.00000000</resolution>
   <randomizable group="0">false</randomizable>
  </bsbObject>
- <bsbObject version="2" type="BSBVSlider">
+ <bsbObject type="BSBVSlider" version="2">
   <objectName>fatt</objectName>
   <x>35</x>
   <y>177</y>
@@ -293,7 +304,7 @@ f 0 3600
   <resolution>-1.00000000</resolution>
   <randomizable group="0">false</randomizable>
  </bsbObject>
- <bsbObject version="2" type="BSBVSlider">
+ <bsbObject type="BSBVSlider" version="2">
   <objectName>fdec</objectName>
   <x>65</x>
   <y>177</y>
@@ -311,7 +322,7 @@ f 0 3600
   <resolution>-1.00000000</resolution>
   <randomizable group="0">false</randomizable>
  </bsbObject>
- <bsbObject version="2" type="BSBVSlider">
+ <bsbObject type="BSBVSlider" version="2">
   <objectName>fsus</objectName>
   <x>95</x>
   <y>177</y>
@@ -329,7 +340,7 @@ f 0 3600
   <resolution>-1.00000000</resolution>
   <randomizable group="0">false</randomizable>
  </bsbObject>
- <bsbObject version="2" type="BSBVSlider">
+ <bsbObject type="BSBVSlider" version="2">
   <objectName>frel</objectName>
   <x>125</x>
   <y>177</y>
@@ -347,7 +358,7 @@ f 0 3600
   <resolution>-1.00000000</resolution>
   <randomizable group="0">false</randomizable>
  </bsbObject>
- <bsbObject version="2" type="BSBVSlider">
+ <bsbObject type="BSBVSlider" version="2">
   <objectName>fenvamount</objectName>
   <x>174</x>
   <y>174</y>
@@ -365,7 +376,7 @@ f 0 3600
   <resolution>-1.00000000</resolution>
   <randomizable group="0">false</randomizable>
  </bsbObject>
- <bsbObject version="2" type="BSBVSlider">
+ <bsbObject type="BSBVSlider" version="2">
   <objectName>cf</objectName>
   <x>204</x>
   <y>174</y>
@@ -383,7 +394,7 @@ f 0 3600
   <resolution>-1.00000000</resolution>
   <randomizable group="0">false</randomizable>
  </bsbObject>
- <bsbObject version="2" type="BSBVSlider">
+ <bsbObject type="BSBVSlider" version="2">
   <objectName>res</objectName>
   <x>234</x>
   <y>174</y>
@@ -401,7 +412,7 @@ f 0 3600
   <resolution>-1.00000000</resolution>
   <randomizable group="0">false</randomizable>
  </bsbObject>
- <bsbObject version="2" type="BSBHSlider">
+ <bsbObject type="BSBHSlider" version="2">
   <objectName>pan</objectName>
   <x>372</x>
   <y>150</y>
@@ -419,7 +430,7 @@ f 0 3600
   <resolution>-1.00000000</resolution>
   <randomizable group="0">false</randomizable>
  </bsbObject>
- <bsbObject version="2" type="BSBVSlider">
+ <bsbObject type="BSBVSlider" version="2">
   <objectName>out</objectName>
   <x>319</x>
   <y>40</y>
@@ -437,7 +448,7 @@ f 0 3600
   <resolution>-1.00000000</resolution>
   <randomizable group="0">false</randomizable>
  </bsbObject>
- <bsbObject version="2" type="BSBVSlider">
+ <bsbObject type="BSBVSlider" version="2">
   <objectName>rm1</objectName>
   <x>349</x>
   <y>40</y>
@@ -455,7 +466,7 @@ f 0 3600
   <resolution>-1.00000000</resolution>
   <randomizable group="0">false</randomizable>
  </bsbObject>
- <bsbObject version="2" type="BSBVSlider">
+ <bsbObject type="BSBVSlider" version="2">
   <objectName>rm2</objectName>
   <x>379</x>
   <y>40</y>
@@ -473,7 +484,7 @@ f 0 3600
   <resolution>-1.00000000</resolution>
   <randomizable group="0">false</randomizable>
  </bsbObject>
- <bsbObject version="2" type="BSBVSlider">
+ <bsbObject type="BSBVSlider" version="2">
   <objectName>rm1amount</objectName>
   <x>409</x>
   <y>40</y>
@@ -491,7 +502,7 @@ f 0 3600
   <resolution>-1.00000000</resolution>
   <randomizable group="0">false</randomizable>
  </bsbObject>
- <bsbObject version="2" type="BSBVSlider">
+ <bsbObject type="BSBVSlider" version="2">
   <objectName>rm1rate</objectName>
   <x>439</x>
   <y>40</y>
@@ -509,7 +520,7 @@ f 0 3600
   <resolution>-1.00000000</resolution>
   <randomizable group="0">false</randomizable>
  </bsbObject>
- <bsbObject version="2" type="BSBVSlider">
+ <bsbObject type="BSBVSlider" version="2">
   <objectName>rm1torm2</objectName>
   <x>469</x>
   <y>40</y>
@@ -527,7 +538,7 @@ f 0 3600
   <resolution>-1.00000000</resolution>
   <randomizable group="0">false</randomizable>
  </bsbObject>
- <bsbObject version="2" type="BSBVSlider">
+ <bsbObject type="BSBVSlider" version="2">
   <objectName>rm2amount</objectName>
   <x>499</x>
   <y>40</y>
@@ -545,7 +556,7 @@ f 0 3600
   <resolution>-1.00000000</resolution>
   <randomizable group="0">false</randomizable>
  </bsbObject>
- <bsbObject version="2" type="BSBVSlider">
+ <bsbObject type="BSBVSlider" version="2">
   <objectName>rm2rate</objectName>
   <x>529</x>
   <y>40</y>
@@ -563,7 +574,7 @@ f 0 3600
   <resolution>-1.00000000</resolution>
   <randomizable group="0">false</randomizable>
  </bsbObject>
- <bsbObject version="2" type="BSBVSlider">
+ <bsbObject type="BSBVSlider" version="2">
   <objectName>outlevel</objectName>
   <x>600</x>
   <y>40</y>
@@ -581,7 +592,7 @@ f 0 3600
   <resolution>-1.00000000</resolution>
   <randomizable group="0">false</randomizable>
  </bsbObject>
- <bsbObject version="2" type="BSBVSlider">
+ <bsbObject type="BSBVSlider" version="2">
   <objectName>revmix</objectName>
   <x>630</x>
   <y>40</y>
@@ -599,7 +610,7 @@ f 0 3600
   <resolution>-1.00000000</resolution>
   <randomizable group="0">false</randomizable>
  </bsbObject>
- <bsbObject version="2" type="BSBVSlider">
+ <bsbObject type="BSBVSlider" version="2">
   <objectName>Roomsize</objectName>
   <x>660</x>
   <y>40</y>
@@ -617,7 +628,7 @@ f 0 3600
   <resolution>-1.00000000</resolution>
   <randomizable group="0">false</randomizable>
  </bsbObject>
- <bsbObject version="2" type="BSBVSlider">
+ <bsbObject type="BSBVSlider" version="2">
   <objectName>HFDamp</objectName>
   <x>690</x>
   <y>40</y>
@@ -638,7 +649,7 @@ f 0 3600
 </bsbPanel>
 <bsbPresets>
 </bsbPresets>
-<EventPanel name="" tempo="120.00000000" loop="8.00000000" x="466" y="322" width="762" height="373" visible="true" loopStart="0" loopEnd="0">i 2 0 1 440 100 1 
+<EventPanel name="" tempo="120.00000000" loop="8.00000000" x="466" y="322" width="762" height="373" visible="false" loopStart="0" loopEnd="0">i 2 0 1 440 100 1 
 i 2 1 1 220 100 1 
 i 2 2 1 440 100 1 
 i 2 3 1 220 100 1 
