@@ -111,7 +111,7 @@ def read_arduino():
         parameters['cf'] = (arduino.analog[0].read()*6000)+100
         #parameters['fenvamount'] = arduino.analog[2].read()
         parameters['rm1'] = arduino.analog[2].read()
-        parameters['rm1rate'] = (arduino.analog[3].read()*500) + 10
+        parameters['rm1rate'] = (arduino.analog[3].read()*50) + 10
         parameters['revmix'] = arduino.analog[4].read()
 
 def init_arduino():
@@ -144,7 +144,7 @@ def cb(csound):
     global kblocks
     global parameters
     kblocks += 1
-    params = ['cf', 'rm1','revmix']
+    params = ['cf', 'res', 'rm1','revmix', 'rm1rate']
     for p in params:
         csound.SetChannel(p, parameters[p])
 
@@ -372,7 +372,7 @@ def show_sequencer():
             break
 
 def convert_to_csound(asuar_text):
-    lines = asuar_text.splitlines()
+    lines = asuar_text.upper().splitlines()
     csound_text = ''
     cur_octave = 4
     cur_pitch = 0
