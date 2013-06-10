@@ -248,7 +248,7 @@ def new_file():
 
 def load_file():
     global note_lists, parameters
-    files = os.listdir(SQS_DIR)
+    files = os.listdir(SEQS_DIR)
     stdscr.clear()
     stdscr.scrollok(True)
     if not files:
