@@ -182,10 +182,10 @@ def show_help_window():
     helpwin = stdscr.subwin(y-3, x-10, 2, 5)
     helpwin.border()
     helpwin.addstr(1, 5, "Por: Andres Burbano y Andres Cabrera", curses.A_BOLD)
-    helpwin.addstr(3, 5, "Licencia:")
+    helpwin.addstr(3, 5, "Licencia: GPL")
     helpwin.addstr(5, 5, "Implementacion del sintetizador COMDASUAR")
     helpwin.addstr(6, 5, "para Raspberry Pi.")
-    helpwin.addstr(8, 5, "Pagina web")
+    helpwin.addstr(8, 5, "https://github.com/mantaraya36/asuar")
     helpwin.refresh()
     for i in range(60):
         perf.InputMessage("i 2 %f 0.05 %i %i 1"%(i/10.0, 110+(i*44), 100 - i))
